@@ -3,50 +3,61 @@ import { useState } from 'react';
 export default function App() {
   const [user, setUser] = useState('');
   const [pass, setPass] = useState('');
-  const [logged, setLogged] = useState(false);
+  const [error, setError] = useState('');
+  const [role, setRole] = useState(null);
 
-  function login() {
-    if (!user || !pass) return alert('請輸入帳號密碼');
-    setLogged(true);
+  const users = {
+    manager: '123456',
+    employee1: 'abcd',
+    employee2: 'abcd'
+  };
+
+  const login = () => {
+    if (!user || !pass) {
+      setError('請輸入帳號與密碼');
+      return;
+    }
+    if (users[user] && users[user] === pass) {
+      setRole(user === 'manager' ? 'manager' : 'employee');
+      setError('');
+    } else {
+      setError('帳號或密碼錯誤');
+    }
+  };
+
+  if (role === 'manager') {
+    return <div className="p-6 text-xl">👩‍💼 歡迎主管！這裡會顯示報表（之後建）</div>;
   }
-
-  function submit() {
-    // 這裡填入你提供的 Apps Script 網址
-    const url = 'https://script.google.com/macros/s/AKfycbyKFw45pPWKejSzLQCuEfojivSG9qbB42uAbl4u7UV-rkhuZTgztfxglUbT4aqUYuPL/exec';
-    const today = new Date().toISOString().split('T')[0];
-    const payload = [
-      {
-        date: today,
-        user,
-        item: '測試商品',
-        actualQty: 5,
-        expiryDate: today,
-        stockInQty: 2
-      }
-    ];
-    fetch(url, {
-      method: 'POST',
-      body: JSON.stringify({ records: payload }),
-      headers: { 'Content-Type': 'application/json' }
-    })
-      .then(res => res.json())
-      .then(r => alert(r.status === 'success' ? '送出成功' : '失敗'));
-  }
-
-  if (!logged) {
-    return (
-      <div>
-        <input placeholder="帳號" onChange={e => setUser(e.target.value)} />
-        <input type="password" placeholder="密碼" onChange={e => setPass(e.target.value)} />
-        <button onClick={login}>登入</button>
-      </div>
-    );
+  if (role === 'employee') {
+    return <div className="p-6 text-xl">🧑‍🔧 歡迎員工！這裡是盤點功能（之後建）</div>;
   }
 
   return (
-    <div>
-      <h2>歡迎，{user}</h2>
-      <button onClick={submit}>測試送出盤點</button>
+    <div className="flex items-center justify-center h-screen bg-gray-100">
+      <div className="bg-white p-8 rounded-xl shadow-xl w-96">
+        <h2 className="text-2xl font-bold mb-4 text-center">盤點系統登入</h2>
+        <input
+          type="text"
+          placeholder="帳號"
+          className="border w-full px-3 py-2 rounded mb-3"
+          value={user}
+          onChange={e => setUser(e.target.value)}
+        />
+        <input
+          type="password"
+          placeholder="密碼"
+          className="border w-full px-3 py-2 rounded mb-3"
+          value={pass}
+          onChange={e => setPass(e.target.value)}
+        />
+        {error && <div className="text-red-500 text-sm mb-2">{error}</div>}
+        <button
+          onClick={login}
+          className="bg-blue-600 hover:bg-blue-700 text-white w-full py-2 rounded"
+        >
+          登入
+        </button>
+      </div>
     </div>
   );
 }
