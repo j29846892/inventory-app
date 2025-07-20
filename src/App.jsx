@@ -40,7 +40,14 @@ export default function App() {
       .then(json => {
         const all = json.data || [];
         const filtered = all.filter(item => item.分類 === selectedCategory);
-        const withInputs = filtered.map(item => ({ ...item, 數量: '', 有效日期: '', 進貨日期: today }));
+        const withInputs = filtered.map(item => ({
+          ...item,
+          數量: '',
+          有效日期: '',
+          進貨日期: today,
+          員工: user,
+          盤點日期: today
+        }));
         setItems(withInputs);
       })
       .catch(() => {
@@ -56,11 +63,11 @@ export default function App() {
 
   const submitData = () => {
     const payload = items.map(item => ({
-      分類: selectedCategory,
+      分類: item.分類,
       品項: item.品項,
       數量: item.數量,
       有效日期: item.有效日期,
-      進貨日期: today,
+      進貨日期: item.進貨日期,
       員工: user,
       盤點日期: today
     }));
@@ -77,7 +84,7 @@ export default function App() {
     )
       .then(res => res.text())
       .then(() => {
-        alert("已成功送出資料！");
+        alert("✅ 已成功送出盤點資料！");
         setSelectedCategory(null);
       });
   };
@@ -117,25 +124,29 @@ export default function App() {
 
         {items.map((item, i) => (
           <div key={i} className="mb-4 p-3 bg-white rounded shadow">
-            <h3 className="font-bold">{item.品項}</h3>
-            <input
-              type="number"
-              placeholder="盤點數量"
-              className="border px-2 py-1 rounded mr-2"
-              onChange={(e) => handleChange(i, '數量', e.target.value)}
-            />
-            <input
-              type="text"
-              placeholder="有效日期 (YYYYMMDD)"
-              className="border px-2 py-1 rounded mr-2"
-              onChange={(e) => handleChange(i, '有效日期', e.target.value)}
-            />
-            <input
-              type="text"
-              value={today}
-              readOnly
-              className="border px-2 py-1 rounded"
-            />
+            <h3 className="font-bold">{item.品項}（{item.單位}）</h3>
+            <div className="flex flex-wrap gap-2 mt-2">
+              <input
+                type="number"
+                placeholder="盤點數量"
+                className="border px-2 py-1 rounded"
+                value={item.數量}
+                onChange={(e) => handleChange(i, '數量', e.target.value)}
+              />
+              <input
+                type="text"
+                placeholder="有效日期 (YYYYMMDD)"
+                className="border px-2 py-1 rounded"
+                value={item.有效日期}
+                onChange={(e) => handleChange(i, '有效日期', e.target.value)}
+              />
+              <input
+                type="text"
+                value={today}
+                readOnly
+                className="border px-2 py-1 rounded bg-gray-100"
+              />
+            </div>
           </div>
         ))}
 
@@ -146,7 +157,7 @@ export default function App() {
           ← 返回分類
         </button>
         <button
-          className="px-4 py-2 border rounded"
+          className="px-4 py-2 border rounded bg-blue-600 text-white"
           onClick={submitData}
         >
           📤 送出盤點資料
