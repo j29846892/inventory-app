@@ -7,10 +7,9 @@ export default function App() {
   const [role, setRole] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [items, setItems] = useState([]);
-  const [today] = useState(() => {
-    const now = new Date();
-    return `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
-  });
+  const [quantities, setQuantities] = useState({});
+  const [dates, setDates] = useState({});
+  const [message, setMessage] = useState('');
 
   const users = {
     manager: '123456',
@@ -18,12 +17,11 @@ export default function App() {
     employee2: 'abcd'
   };
 
+  const today = new Date().toISOString().slice(0, 10).replaceAll('-', '');
+
   const login = () => {
-    if (!user || !pass) {
-      setError('請輸入帳號與密碼');
-      return;
-    }
-    if (users[user] && users[user] === pass) {
+    if (!user || !pass) return setError('請輸入帳號與密碼');
+    if (users[user] === pass) {
       setRole(user === 'manager' ? 'manager' : 'employee');
       setError('');
     } else {
@@ -31,67 +29,52 @@ export default function App() {
     }
   };
 
-  useEffect(() => {
-    if (!selectedCategory) return;
-    fetch(
-      `https://script.google.com/macros/s/AKfycbyKFw45pPWKejSzLQCuEfojivSG9qbB42uAbl4u7UV-rkhuZTgztfxglUbT4aqUYuPL/exec?sheet=商品清單`
-    )
-      .then(res => res.json())
-      .then(json => {
-        const all = json.data || [];
-        const filtered = all.filter(item => item.分類 === selectedCategory);
-        const withInputs = filtered.map(item => ({
-          ...item,
-          數量: '',
-          有效日期: '',
-          進貨日期: today,
-          員工: user,
-          盤點日期: today
-        }));
-        setItems(withInputs);
-      })
-      .catch(() => {
-        alert("無法連線到 Google Sheets");
-      });
-  }, [selectedCategory]);
-
-  const handleChange = (index, field, value) => {
-    const updated = [...items];
-    updated[index][field] = value;
-    setItems(updated);
+  const fetchItems = async (category) => {
+    const url = `https://script.google.com/macros/s/AKfycbyKFw45pPWKejSzLQCuEfojivSG9qbB42uAbl4u7UV-rkhuZTgztfxglUbT4aqUYuPL/exec?sheet=商品清單`;
+    const res = await fetch(url);
+    const json = await res.json();
+    const filtered = json.data.filter(row => row.分類 === category);
+    setItems(filtered);
   };
 
-  const submitData = () => {
+  const handleSubmit = async () => {
     const payload = items.map(item => ({
       分類: item.分類,
       品項: item.品項,
-      數量: item.數量,
-      有效日期: item.有效日期,
-      進貨日期: item.進貨日期,
+      數量: quantities[item.品項] || '',
+      有效日期: dates[item.品項] || '',
+      進貨日期: today,
       員工: user,
       盤點日期: today
-    }));
+    })).filter(row => row.數量 !== '');
 
-    fetch('https://script.google.com/macros/s/AKfycbyKFw45pPWKejSzLQCuEfojivSG9qbB42uAbl4u7UV-rkhuZTgztfxglUbT4aqUYuPL/exec', {
-  method: 'POST',
-  body: JSON.stringify(payload), // payload 是 array of objects
-  headers: {
-    'Content-Type': 'application/json'
-  }
-})
-      .then(res => res.text())
-      .then(() => {
-        alert("✅ 已成功送出盤點資料！");
-        setSelectedCategory(null);
+    if (payload.length === 0) {
+      setMessage('請至少輸入一筆數量');
+      return;
+    }
+
+    try {
+      const res = await fetch('https://script.google.com/macros/s/AKfycbyKFw45pPWKejSzLQCuEfojivSG9qbB42uAbl4u7UV-rkhuZTgztfxglUbT4aqUYuPL/exec', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+        headers: { 'Content-Type': 'application/json' }
       });
+      const text = await res.text();
+      if (text === 'Success') {
+        setMessage('✅ 送出成功');
+        setQuantities({});
+        setDates({});
+      } else {
+        setMessage('❌ 發送失敗');
+      }
+    } catch (err) {
+      console.error(err);
+      setMessage('❌ 發送錯誤');
+    }
   };
 
   if (role === 'manager') {
-    return (
-      <div className="p-6 text-xl">
-        👩‍💼 歡迎主管！這裡會顯示報表（下一步實作）
-      </div>
-    );
+    return <div className="p-6 text-xl">👩‍💼 歡迎主管！報表功能待建置</div>;
   }
 
   if (role === 'employee') {
@@ -104,7 +87,11 @@ export default function App() {
             {categories.map(cat => (
               <button
                 key={cat}
-                onClick={() => setSelectedCategory(cat)}
+                onClick={() => {
+                  setSelectedCategory(cat);
+                  fetchItems(cat);
+                  setMessage('');
+                }}
                 className="p-4 bg-gray-200 rounded hover:bg-blue-200"
               >
                 {cat}
@@ -116,48 +103,36 @@ export default function App() {
     }
 
     return (
-      <div className="p-6">
-        <h2 className="text-xl font-bold mb-4">分類：{selectedCategory}</h2>
-
-        {items.map((item, i) => (
-          <div key={i} className="mb-4 p-3 bg-white rounded shadow">
-            <h3 className="font-bold">{item.品項}（{item.單位}）</h3>
-            <div className="flex flex-wrap gap-2 mt-2">
-              <input
-                type="number"
-                placeholder="盤點數量"
-                className="border px-2 py-1 rounded"
-                value={item.數量}
-                onChange={(e) => handleChange(i, '數量', e.target.value)}
-              />
-              <input
-                type="text"
-                placeholder="有效日期 (YYYYMMDD)"
-                className="border px-2 py-1 rounded"
-                value={item.有效日期}
-                onChange={(e) => handleChange(i, '有效日期', e.target.value)}
-              />
-              <input
-                type="text"
-                value={today}
-                readOnly
-                className="border px-2 py-1 rounded bg-gray-100"
-              />
-            </div>
+      <div className="p-6 space-y-4">
+        <h2 className="text-xl font-bold mb-2">{selectedCategory} 盤點</h2>
+        {items.map(item => (
+          <div key={item.品項} className="bg-white p-3 rounded shadow">
+            <div className="font-bold">{item.品項} ({item.單位})</div>
+            <input
+              type="number"
+              placeholder="數量"
+              value={quantities[item.品項] || ''}
+              onChange={e => setQuantities(prev => ({ ...prev, [item.品項]: e.target.value }))}
+              className="border p-1 mt-1 mr-2 w-24"
+            />
+            <input
+              type="text"
+              placeholder="有效日期 (YYYYMMDD)"
+              value={dates[item.品項] || ''}
+              onChange={e => setDates(prev => ({ ...prev, [item.品項]: e.target.value }))}
+              className="border p-1 mt-1 w-40"
+            />
           </div>
         ))}
-
         <button
-          className="mr-2 px-4 py-2 border rounded"
-          onClick={() => setSelectedCategory(null)}
+          onClick={handleSubmit}
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
         >
-          ← 返回分類
+          送出盤點資料
         </button>
-        <button
-          className="px-4 py-2 border rounded bg-blue-600 text-white"
-          onClick={submitData}
-        >
-          📤 送出盤點資料
+        {message && <div className="text-red-500">{message}</div>}
+        <button className="text-blue-600 underline" onClick={() => setSelectedCategory(null)}>
+          ← 返回分類
         </button>
       </div>
     );
