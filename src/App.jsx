@@ -5,6 +5,7 @@ export default function App() {
   const [pass, setPass] = useState('');
   const [error, setError] = useState('');
   const [role, setRole] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState(null);
 
   const users = {
     manager: '123456',
@@ -26,42 +27,44 @@ export default function App() {
   };
 
   if (role === 'manager') {
-    return <div className="p-6 text-xl">👩‍💼 歡迎主管！這裡會顯示報表（之後建）</div>;
+    return (
+      <div className="p-6 text-xl">
+        👩‍💼 歡迎主管！這裡會顯示報表（下一步實作）
+      </div>
+    );
   }
-  if (role === 'employee') {
-  const categories = ['飲料', '冷凍品', '乾貨', '即食食品', '耗材'];
-  const [selectedCategory, setSelectedCategory] = useState(null);
 
-  if (!selectedCategory) {
+  if (role === 'employee') {
+    const categories = ['飲料', '冷凍品', '乾貨', '即食食品', '耗材'];
+    if (!selectedCategory) {
+      return (
+        <div className="p-6">
+          <h2 className="text-xl font-bold mb-4">請選擇分類進行盤點：</h2>
+          <div className="grid grid-cols-2 gap-4">
+            {categories.map(cat => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className="p-4 bg-gray-200 rounded hover:bg-blue-200"
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="p-6">
-        <h2 className="text-xl font-bold mb-4">請選擇分類進行盤點：</h2>
-        <div className="grid grid-cols-2 gap-4">
-          {categories.map(cat => (
-            <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className="p-4 bg-gray-200 rounded hover:bg-blue-200"
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
+        <h2 className="text-xl font-bold mb-4">{selectedCategory} 盤點畫面（下一步實作）</h2>
+        <button className="text-blue-600 underline" onClick={() => setSelectedCategory(null)}>← 返回分類</button>
       </div>
     );
   }
 
   return (
-    <div className="p-6">
-      <h2 className="text-xl font-bold mb-4">{selectedCategory} 盤點畫面（下一步我會幫你實作）</h2>
-      <button className="text-blue-600 underline" onClick={() => setSelectedCategory(null)}>← 返回分類</button>
-    </div>
-  );
-}
-
-
-  return (
-    <div className="flex items-center justify-center h-screen bg-gray-100">
+    <div className="flex items-center justify-center h-screen">
       <div className="bg-white p-8 rounded-xl shadow-xl w-96">
         <h2 className="text-2xl font-bold mb-4 text-center">盤點系統登入</h2>
         <input
