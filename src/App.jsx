@@ -72,16 +72,13 @@ export default function App() {
       盤點日期: today
     }));
 
-    fetch(
-      'https://script.google.com/macros/s/AKfycbyKFw45pPWKejSzLQCuEfojivSG9qbB42uAbl4u7UV-rkhuZTgztfxglUbT4aqUYuPL/exec',
-      {
-        method: 'POST',
-        body: JSON.stringify(payload),
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      }
-    )
+    fetch('https://script.google.com/macros/s/AKfycbyKFw45pPWKejSzLQCuEfojivSG9qbB42uAbl4u7UV-rkhuZTgztfxglUbT4aqUYuPL/exec', {
+  method: 'POST',
+  body: JSON.stringify(payload), // payload 是 array of objects
+  headers: {
+    'Content-Type': 'application/json'
+  }
+})
       .then(res => res.text())
       .then(() => {
         alert("✅ 已成功送出盤點資料！");
