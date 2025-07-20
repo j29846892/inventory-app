@@ -29,8 +29,36 @@ export default function App() {
     return <div className="p-6 text-xl">👩‍💼 歡迎主管！這裡會顯示報表（之後建）</div>;
   }
   if (role === 'employee') {
-    return <div className="p-6 text-xl">🧑‍🔧 歡迎員工！這裡是盤點功能（之後建）</div>;
+  const categories = ['飲料', '冷凍品', '乾貨', '即食食品', '耗材'];
+  const [selectedCategory, setSelectedCategory] = useState(null);
+
+  if (!selectedCategory) {
+    return (
+      <div className="p-6">
+        <h2 className="text-xl font-bold mb-4">請選擇分類進行盤點：</h2>
+        <div className="grid grid-cols-2 gap-4">
+          {categories.map(cat => (
+            <button
+              key={cat}
+              onClick={() => setSelectedCategory(cat)}
+              className="p-4 bg-gray-200 rounded hover:bg-blue-200"
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
   }
+
+  return (
+    <div className="p-6">
+      <h2 className="text-xl font-bold mb-4">{selectedCategory} 盤點畫面（下一步我會幫你實作）</h2>
+      <button className="text-blue-600 underline" onClick={() => setSelectedCategory(null)}>← 返回分類</button>
+    </div>
+  );
+}
+
 
   return (
     <div className="flex items-center justify-center h-screen bg-gray-100">
